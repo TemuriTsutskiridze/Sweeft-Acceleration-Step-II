@@ -1,10 +1,11 @@
-import GlobalStyle from "./Globals";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useEffect, useState } from "react";
+import GlobalStyle from "./Globals";
 
 function App() {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState("");
 
   useEffect(() => {
     async function fetchData() {
@@ -22,12 +23,53 @@ function App() {
         console.error("Error fetching data:", error);
         setLoading(false);
       }
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              const geocodingResponse = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCzKhJdcPyon6UYWXXT9dSfiFqqo10KGVA`
+              );
+
+              if (!geocodingResponse.ok) {
+                throw new Error("Geocoding response was not ok");
+              }
+
+              const geocodingData = await geocodingResponse.json();
+              console.log(geocodingData);
+              if (
+                geocodingData.results &&
+                geocodingData.results.length > 0 &&
+                geocodingData.results[0].address_components
+              ) {
+                const country =
+                  geocodingData.results[0].address_components.find(
+                    (component) => component.types.includes("country")
+                  );
+
+                if (country) {
+                  // Set the selected country based on the user's location
+                  setSelectedCountry(country.long_name);
+                }
+              }
+            } catch (error) {
+              console.error("Error fetching country by location:", error);
+            }
+          },
+          (error) => {
+            console.error("Error getting geolocation:", error);
+          }
+        );
+      } else {
+        console.error("Geolocation is not available in this browser.");
+      }
     }
 
     fetchData();
   }, []);
 
-  console.log(countries[0]);
   return (
     <>
       <GlobalStyle />
@@ -35,7 +77,11 @@ function App() {
         <CountriesWrapper>
           <Countries>
             {countries.map((country: any, index) => {
-              return <Option key={index}>{country.name.common}</Option>;
+              return (
+                <Option key={index} value={country.name.common}>
+                  {country.name.common}
+                </Option>
+              );
             })}
           </Countries>
           {loading ? (
@@ -51,6 +97,9 @@ function App() {
             </svg>
           )}
         </CountriesWrapper>
+        <SelectedCountry>
+          Selected Country: {selectedCountry || "Not available"}
+        </SelectedCountry>
       </Container>
     </>
   );
@@ -104,6 +153,12 @@ const Countries = styled.select`
 `;
 
 const Option = styled.option`
+  font-size: 1.6rem;
+  font-weight: 400;
+`;
+
+const SelectedCountry = styled.div`
+  margin-top: 1rem;
   font-size: 1.6rem;
   font-weight: 400;
 `;
