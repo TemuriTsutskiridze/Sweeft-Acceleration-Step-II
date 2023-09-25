@@ -4,8 +4,11 @@ import GlobalStyle from "./Globals";
 
 function App() {
   const [countries, setCountries] = useState([]);
+  const [country, setCountry] = useState();
   const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState("");
+
+  console.log(countries[0]);
 
   useEffect(() => {
     async function fetchData() {
@@ -70,6 +73,24 @@ function App() {
     fetchData();
   }, []);
 
+  async function fetchCountry(name: string) {
+    try {
+      const response = await fetch(
+        `https://restcountries.com/v3.1/name/${name}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const jsonData = await response.json();
+      setCountry(jsonData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  }
+  console.log(country);
+
   return (
     <>
       <GlobalStyle />
@@ -78,7 +99,11 @@ function App() {
           <Countries>
             {countries.map((country: any, index) => {
               return (
-                <Option key={index} value={country.name.common}>
+                <Option
+                  key={index}
+                  value={country.name.common}
+                  onClick={() => fetchCountry(country.name.common)}
+                >
                   {country.name.common}
                 </Option>
               );
@@ -97,9 +122,13 @@ function App() {
             </svg>
           )}
         </CountriesWrapper>
-        <SelectedCountry>
+        {/* <SelectedCountry>
           Selected Country: {selectedCountry || "Not available"}
-        </SelectedCountry>
+        </SelectedCountry> */}
+
+        <TitleContainer>
+          <CountryName>{country}</CountryName>
+        </TitleContainer>
       </Container>
     </>
   );
@@ -157,8 +186,21 @@ const Option = styled.option`
   font-weight: 400;
 `;
 
-const SelectedCountry = styled.div`
-  margin-top: 1rem;
-  font-size: 1.6rem;
+// const SelectedCountry = styled.div`
+//   margin-top: 1rem;
+//   font-size: 1.6rem;
+//   font-weight: 400;
+// `;
+
+const TitleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const CountryName = styled.h4`
   font-weight: 400;
+  font-size: 2.125rem;
+  line-height: 1.235;
+  letter-spacing: 0.00735em;
 `;
