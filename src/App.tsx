@@ -122,9 +122,9 @@ function App() {
             </svg>
           )}
         </CountriesWrapper>
-        {/* <SelectedCountry>
+        <SelectedCountry>
           Selected Country: {selectedCountry || "Not available"}
-        </SelectedCountry> */}
+        </SelectedCountry>
 
         <TitleContainer>
           <CountryName>{country}</CountryName>
@@ -186,11 +186,11 @@ const Option = styled.option`
   font-weight: 400;
 `;
 
-// const SelectedCountry = styled.div`
-//   margin-top: 1rem;
-//   font-size: 1.6rem;
-//   font-weight: 400;
-// `;
+const SelectedCountry = styled.div`
+  margin-top: 1rem;
+  font-size: 1.6rem;
+  font-weight: 400;
+`;
 
 const TitleContainer = styled.div`
   display: flex;
