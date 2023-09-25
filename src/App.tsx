@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import GlobalStyle from "./Globals";
 
@@ -46,7 +46,7 @@ function App() {
               ) {
                 const country =
                   geocodingData.results[0].address_components.find(
-                    (component) => component.types.includes("country")
+                    (component: any) => component.types.includes("country")
                   );
 
                 if (country) {
