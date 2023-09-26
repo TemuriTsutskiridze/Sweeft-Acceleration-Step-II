@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import GlobalStyle from "./Globals";
-import { Coordinates } from "navigator";
+
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
 
 function App() {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null); // Store user's location
-
-  console.log(countries[0]);
 
   useEffect(() => {
     async function fetchData() {
@@ -53,13 +55,14 @@ function App() {
     };
 
     fetchUserLocation();
-  });
+  }, []);
 
   const fetchCountryByLocation = async (
     latitude: number,
     longitude: number
   ) => {
     try {
+      // put api key later
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
       );
@@ -112,9 +115,9 @@ function App() {
           )}
         </CountriesWrapper>
 
-        <TitleContainer>
+        {/* <TitleContainer>
           <CountryName>{country}</CountryName>
-        </TitleContainer>
+        </TitleContainer> */}
       </Container>
     </>
   );
