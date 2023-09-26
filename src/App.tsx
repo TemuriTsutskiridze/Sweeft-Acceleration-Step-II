@@ -11,7 +11,39 @@ function App() {
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(null); // Store user's location
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [userCountry, setUserCountry] = useState<string>("");
+  const [countryData, setCountryData] = useState<any>({});
+
+  async function getCountryData(country: string) {
+    try {
+      const response = await fetch(
+        `https://restcountries.com/v3.1/name/${country.toLowerCase()}`
+      );
+
+      console.log(
+        `https://restcountries.com/v3.1/name/${country.toLowerCase()}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const jsonData = await response.json();
+      console.log(jsonData);
+      setCountryData(jsonData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (userCountry !== "") {
+      getCountryData(userCountry);
+    }
+  }, [userCountry]);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,10 +63,34 @@ function App() {
       }
     }
 
-    fetchData();
-  }, []);
+    const fetchCountryByLocation = async (
+      latitude: number,
+      longitude: number
+    ) => {
+      try {
+        // put api key later
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyC4F7oJm1Lq2c6H6yHksYMf0VBHEriIZp8`
+        );
 
-  useEffect(() => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const jsonData = await response.json();
+
+        setUserCountry(jsonData.results.at(-1).formatted_address);
+
+        // const country = extractCountryFromGeocoding(jsonData);
+
+        // if (country) {
+        //   setSelectedCountry(country);
+        // }
+      } catch (error) {
+        console.error("Error fetching country by location:", error);
+      }
+    };
+
     const fetchUserLocation = () => {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -44,6 +100,7 @@ function App() {
               position.coords.latitude,
               position.coords.longitude
             );
+            fetchData();
           },
           (error) => {
             console.error("Error getting location:", error);
@@ -56,32 +113,6 @@ function App() {
 
     fetchUserLocation();
   }, []);
-
-  const fetchCountryByLocation = async (
-    latitude: number,
-    longitude: number
-  ) => {
-    try {
-      // put api key later
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
-      );
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const jsonData = await response.json();
-
-      // const country = extractCountryFromGeocoding(jsonData);
-
-      // if (country) {
-      //   setSelectedCountry(country);
-      // }
-    } catch (error) {
-      console.error("Error fetching country by location:", error);
-    }
-  };
 
   return (
     <>
@@ -115,9 +146,11 @@ function App() {
           )}
         </CountriesWrapper>
 
-        {/* <TitleContainer>
-          <CountryName>{country}</CountryName>
-        </TitleContainer> */}
+        {/* <div>
+          <div>
+            {userCountry} <img src={countryData[0].flags.svg} alt={`coun`} />
+          </div>
+        </div> */}
       </Container>
     </>
   );
