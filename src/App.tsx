@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import GlobalStyle from "./Globals";
+import { Coordinates } from "navigator";
 
 function App() {
   const [countries, setCountries] = useState([]);
-  const [country, setCountry] = useState();
   const [loading, setLoading] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null); // Store user's location
 
   console.log(countries[0]);
 
@@ -26,57 +27,41 @@ function App() {
         console.error("Error fetching data:", error);
         setLoading(false);
       }
-
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            try {
-              const geocodingResponse = await fetch(
-                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCzKhJdcPyon6UYWXXT9dSfiFqqo10KGVA`
-              );
-
-              if (!geocodingResponse.ok) {
-                throw new Error("Geocoding response was not ok");
-              }
-
-              const geocodingData = await geocodingResponse.json();
-              console.log(geocodingData);
-              if (
-                geocodingData.results &&
-                geocodingData.results.length > 0 &&
-                geocodingData.results[0].address_components
-              ) {
-                const country =
-                  geocodingData.results[0].address_components.find(
-                    (component: any) => component.types.includes("country")
-                  );
-
-                if (country) {
-                  // Set the selected country based on the user's location
-                  setSelectedCountry(country.long_name);
-                }
-              }
-            } catch (error) {
-              console.error("Error fetching country by location:", error);
-            }
-          },
-          (error) => {
-            console.error("Error getting geolocation:", error);
-          }
-        );
-      } else {
-        console.error("Geolocation is not available in this browser.");
-      }
     }
 
     fetchData();
   }, []);
 
-  async function fetchCountry(name: string) {
+  useEffect(() => {
+    const fetchUserLocation = () => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation(position.coords);
+            fetchCountryByLocation(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+          }
+        );
+      } else {
+        console.error("Geolocation is not supported in this browser.");
+      }
+    };
+
+    fetchUserLocation();
+  });
+
+  const fetchCountryByLocation = async (
+    latitude: number,
+    longitude: number
+  ) => {
     try {
       const response = await fetch(
-        `https://restcountries.com/v3.1/name/${name}`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
       );
 
       if (!response.ok) {
@@ -84,12 +69,16 @@ function App() {
       }
 
       const jsonData = await response.json();
-      setCountry(jsonData);
+
+      // const country = extractCountryFromGeocoding(jsonData);
+
+      // if (country) {
+      //   setSelectedCountry(country);
+      // }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching country by location:", error);
     }
-  }
-  console.log(country);
+  };
 
   return (
     <>
@@ -102,7 +91,7 @@ function App() {
                 <Option
                   key={index}
                   value={country.name.common}
-                  onClick={() => fetchCountry(country.name.common)}
+                  // onClick={() => fetchCountry(country.name.common)}
                 >
                   {country.name.common}
                 </Option>
@@ -122,9 +111,6 @@ function App() {
             </svg>
           )}
         </CountriesWrapper>
-        <SelectedCountry>
-          Selected Country: {selectedCountry || "Not available"}
-        </SelectedCountry>
 
         <TitleContainer>
           <CountryName>{country}</CountryName>
@@ -182,12 +168,6 @@ const Countries = styled.select`
 `;
 
 const Option = styled.option`
-  font-size: 1.6rem;
-  font-weight: 400;
-`;
-
-const SelectedCountry = styled.div`
-  margin-top: 1rem;
   font-size: 1.6rem;
   font-weight: 400;
 `;
